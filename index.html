@@ -29,6 +29,7 @@
 </head>
 <body class="bg-white text-blue-900 font-sans antialiased pb-16 selection:bg-blue-900 selection:text-white">
 
+  <!-- メインヘッダー -->
   <header class="max-w-4xl mx-auto px-4 pt-16 pb-8 text-center">
     <div class="inline-flex items-center gap-2 bg-blue-900 text-white text-xs px-5 py-2 mb-6 font-black uppercase border-2 border-blue-900 shadow-[4px_4px_0_0_#1e3a8a]">
       <i data-lucide="sparkles" class="w-4 h-4"></i> Requirements System
@@ -39,6 +40,7 @@
     </p>
   </header>
 
+  <!-- 進捗バー -->
   <div class="max-w-4xl mx-auto px-4 mb-10">
     <div class="bg-white border-4 border-blue-900 p-5 shadow-[8px_8px_0_0_#1e3a8a] flex flex-col md:flex-row items-center gap-4">
       <div class="flex items-center gap-4 w-full md:w-auto">
@@ -54,7 +56,9 @@
 
   <main class="max-w-4xl mx-auto px-4">
     
+    <!-- STEP: FORM -->
     <div id="step-form" class="grid lg:grid-cols-12 gap-8 items-start">
+      <!-- サイドメニュー -->
       <div class="lg:col-span-4 space-y-6">
         <div class="bg-white border-4 border-blue-900 p-5 shadow-[6px_6px_0_0_#1e3a8a]">
           <h3 class="text-sm font-black uppercase border-b-2 border-blue-900 pb-2 mb-4">表示スタイル</h3>
@@ -72,7 +76,9 @@
         <button onclick="resetData()" class="w-full bg-white border-4 border-blue-900 font-black py-4 flex justify-center gap-2 shadow-[6px_6px_0_0_#1e3a8a] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"><i data-lucide="rotate-ccw" class="w-4 h-4"></i> 入力をリセット</button>
       </div>
 
+      <!-- 入力エリア -->
       <div class="lg:col-span-8">
+        <!-- 1問ずつモード -->
         <div id="view-step" class="bg-white border-4 border-blue-900 shadow-[8px_8px_0_0_#1e3a8a] animate-fade-in">
           <div class="bg-blue-900 text-white p-6 md:p-8 flex items-start gap-4 border-b-4 border-blue-900">
             <div id="step-icon-container" class="bg-white p-3 border-2 border-blue-900 text-blue-900 shadow-[4px_4px_0_0_#06b6d4]"></div>
@@ -96,6 +102,7 @@
           </div>
         </div>
 
+        <!-- 一括モード -->
         <div id="view-all" class="hidden-step space-y-8 animate-fade-in">
           <div id="all-questions-container"></div>
           <div class="text-center pt-6">
@@ -105,6 +112,7 @@
       </div>
     </div>
 
+    <!-- STEP: PREVIEW -->
     <div id="step-preview" class="hidden-step bg-white border-4 border-blue-900 shadow-[12px_12px_0_0_#1e3a8a] max-w-4xl mx-auto animate-fade-in">
       <div class="bg-blue-900 text-white p-6 md:p-8 flex flex-col md:flex-row justify-between md:items-center gap-4 border-b-4 border-blue-900">
         <h2 class="text-2xl font-black flex items-center gap-3"><i data-lucide="check-circle" class="w-8 h-8 text-cyan-400"></i> 回答内容の確認</h2>
@@ -119,6 +127,7 @@
       </div>
     </div>
 
+    <!-- STEP: STATUS (Submitting / Complete / Error) -->
     <div id="step-status" class="hidden-step bg-white border-4 border-blue-900 shadow-[12px_12px_0_0_#1e3a8a] p-12 md:p-16 text-center max-w-2xl mx-auto animate-fade-in mt-10">
       <div id="status-icon" class="w-24 h-24 border-4 border-blue-900 flex items-center justify-center mx-auto mb-8"></div>
       <h2 id="status-heading" class="text-3xl font-black mb-4 uppercase tracking-widest"></h2>
@@ -130,15 +139,15 @@
 
   <script>
     // =========================================================
-    // ⚙️ バックエンド通信設定
+    // ⚙️ 管理者設定
     // =========================================================
     const CONFIG = {
-      // 接続するGASウェブアプリURL（秘密情報やメールアドレスはすべてGAS側の金庫で安全に管理されています）
+      // 指定されたGASの「ウェブアプリ URL」
       GAS_URL: "https://script.google.com/macros/s/AKfycbztnrbX_F30l1C5ZCjWK5Q3IWcIpoLgwGRsdlCUaBeDVn-Lo_GQYSMLIkYw35YrV41f/exec"
     };
     // =========================================================
 
-    // データ定義（純粋なヒアリング項目のみ）
+    // データ定義
     const questions = [
       { id: 'desired_tool', category: '希望するツール・アプリ', icon: 'lightbulb', text: 'どのようなツールやアプリを作成したいですか？', placeholder: '例：営業スタッフ向けの経費精算アプリなど', suggestions: ['社内向け顧客管理(CRM)Webシステム', '営業スタッフ向けの経費精算スマートフォンアプリ', '自動データ収集・集計を行うスクレイピングツール'] },
       { id: 'purpose', category: '利用目的・解決したい課題', icon: 'target', text: 'そのツールを作る目的は何ですか？どのような課題を解決したいですか？', placeholder: '例：毎月の経費入力作業が手間で自動化したい。', suggestions: ['手作業による転記作業・ヒューマンエラーを削減したい', '外出先からリアルタイムで情報を入力・共有できるようにしたい', '紙やExcelでの管理から脱却したい'] },
@@ -342,7 +351,7 @@
         icon.classList.add('bg-blue-900', 'text-cyan-400');
         icon.innerHTML = `<i data-lucide="check-circle" class="w-12 h-12"></i>`;
         head.innerText = "送信完了！";
-        msg.innerText = "ご協力ありがとうございました！\n自動解析された要件定義書が管理者に安全に通知されました。";
+        msg.innerText = "ご協力ありがとうございました！\n担当者が確認のうえご連絡差し上げます。";
         btn.innerText = "最初に戻る";
         btn.classList.remove('hidden-step');
       } else {
