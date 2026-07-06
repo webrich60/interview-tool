@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>プロジェクトヒアリングシート</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .hidden-step { display: none !important; }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            blue: { 50: '#eff6ff', 900: '#1e3a8a' },
+            cyan: { 400: '#22d3ee', 500: '#06b6d4' }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-white text-blue-900 font-sans antialiased pb-16 selection:bg-blue-900 selection:text-white">
+
+  <!-- 設定パネルヘッダー -->
+  <div class="bg-blue-50 border-b-4 border-blue-900 py-3 px-4 flex justify-between items-center sticky top-0 z-50">
+    <div class="flex items-center gap-2">
+      <span id="status-dot" class="w-3 h-3 rounded-full border-2 border-blue-900 bg-rose-400"></span>
+      <span id="status-text" class="font-black text-blue-900 text-sm tracking-tight">LOCAL DEMO MODE</span>
+    </div>
+    <button onclick="toggleSettings()" class="bg-white hover:bg-blue-900 text-blue-900 hover:text-white transition-colors px-4 py-2 flex items-center gap-2 font-black border-2 border-blue-900 shadow-[2px_2px_0_0_#1e3a8a] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] text-xs">
+      <i data-lucide="sliders" class="w-4 h-4"></i> GAS SETUP (管理設定)
+    </button>
+  </div>
+
+  <!-- 設定モーダル (非表示デフォルト) -->
+  <div id="settings-panel" class="hidden-step max-w-4xl mx-auto mt-6 px-4">
+    <div class="bg-white border-4 border-blue-900 p-6 shadow-[8px_8px_0_0_#1e3a8a] animate-fade-in space-y-6">
+      <div class="flex justify-between border-b-4 border-blue-900 pb-4">
+        <h3 class="text-xl font-black flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6"></i> 管理者設定</h3>
+        <button onclick="toggleSettings()" class="text-sm font-bold text-gray-500 hover:text-blue-900">✕ 閉じる</button>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6 text-sm font-medium">
+        <div class="space-y-4">
+          <div>
+            <h4 class="font-black border-b-2 pb-1">1. ウェブアプリURL</h4>
+            <input type="text" id="input-gas-url" placeholder="https://script.google.com/..." class="w-full p-2.5 bg-white border-2 border-blue-900 focus:shadow-[4px_4px_0_0_#1e3a8a] transition-all font-bold text-xs mt-2">
+          </div>
+          <div>
+            <h4 class="font-black border-b-2 pb-1">2. 通知先メールアドレス</h4>
+            <input type="email" id="input-admin-email" placeholder="admin@example.com" class="w-full p-2.5 bg-white border-2 border-blue-900 focus:shadow-[4px_4px_0_0_#1e3a8a] transition-all font-bold text-xs mt-2">
+          </div>
+          <button onclick="saveSettings()" class="w-full bg-blue-900 text-white font-black py-3 border-2 border-blue-900 shadow-[4px_4px_0_0_#1e3a8a] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all uppercase mt-2">設定を保存</button>
+        </div>
+        <div class="flex flex-col justify-between space-y-4">
+          <div>
+            <h4 class="font-black border-b-2 pb-1">3. GAS側ソースコード</h4>
+            <p class="text-xs mt-2">スプレッドシートにコピペしてデプロイしてください。</p>
+          </div>
+          <button onclick="copyGasCode()" id="btn-copy-gas" class="w-full font-black py-4 border-2 border-blue-900 shadow-[4px_4px_0_0_#1e3a8a] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex justify-center gap-2 bg-white text-blue-900">
+            <i data-lucide="copy" class="w-5 h-5"></i> GASコードをコピー
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <header class="max-w-4xl mx-auto px-4 pt-10 pb-6 text-center">
+    <div class="inline-flex items-center gap-2 bg-blue-900 text-white text-xs px-5 py-2 mb-6 font-black uppercase border-2 border-blue-900 shadow-[4px_4px_0_0_#1e3a8a]">
+      <i data-lucide="sparkles" class="w-4 h-4"></i> Requirements System
+    </div>
+    <h1 class="text-4xl md:text-5xl font-black tracking-tighter mb-4">プロジェクト<br/>ヒアリングシート</h1>
+    <p class="font-bold text-sm max-w-2xl mx-auto border-t-4 border-blue-900 pt-4">最適な要件定義を自動構築します。リラックスしてご入力ください。</p>
+  </header>
+
+  <!-- 進捗バー -->
+  <div class="max-w-4xl mx-auto px-4 mb-8">
+    <div class="bg-white border-4 border-blue-900 p-4 shadow-[8px_8px_0_0_#1e3a8a] flex flex-col md:flex-row items-center gap-4">
+      <div class="flex items-center gap-4 w-full md:w-auto">
+        <div class="bg-blue-900 text-white text-xs font-black px-3 py-1 flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> Progress</div>
+        <div class="text-sm font-black">全 7 項目中 <span id="progress-count" class="text-2xl text-cyan-500 mx-1">0</span> 完了</div>
+      </div>
+      <div class="w-full flex-1 bg-blue-50 h-4 border-2 border-blue-900 relative">
+        <div id="progress-bar" class="bg-cyan-400 h-full border-r-2 border-blue-900 transition-all duration-500" style="width: 0%"></div>
+      </div>
+      <span id="progress-percent" class="text-xl font-black">0%</span>
+    </div>
+  </div>
+
+  <main class="max-w-4xl mx-auto px-4">
+    
+    <!-- STEP: FORM -->
+    <div id="step-form" class="grid lg:grid-cols-12 gap-8 items-start">
+      <!-- サイドメニュー -->
+      <div class="lg:col-span-4 space-y-6">
+        <div class="bg-white border-4 border-blue-900 p-4 shadow-[6px_6px_0_0_#1e3a8a]">
+          <h3 class="text-sm font-black uppercase border-b-2 border-blue-900 pb-2 mb-3">表示スタイル</h3>
+          <div class="grid gap-2">
+            <button onclick="setViewMode('step')" id="btn-mode-step" class="flex justify-center gap-2 py-2 border-2 border-blue-900 bg-blue-900 text-white shadow-[4px_4px_0_0_#06b6d4] font-black text-sm transition-all"><i data-lucide="layers" class="w-4 h-4"></i> 1問ずつ回答</button>
+            <button onclick="setViewMode('all')" id="btn-mode-all" class="flex justify-center gap-2 py-2 border-2 border-blue-900 bg-white hover:shadow-[4px_4px_0_0_#1e3a8a] font-black text-sm transition-all"><i data-lucide="layout-grid" class="w-4 h-4"></i> 一括表示</button>
+          </div>
+        </div>
+        
+        <div class="bg-white border-4 border-blue-900 p-4 shadow-[6px_6px_0_0_#1e3a8a] hidden lg:block">
+          <h3 class="text-sm font-black uppercase border-b-2 border-blue-900 pb-2 mb-3">ヒアリング項目</h3>
+          <div id="nav-list" class="space-y-2"></div>
+        </div>
+        
+        <button onclick="resetData()" class="w-full bg-white border-4 border-blue-900 font-black py-3 flex justify-center gap-2 shadow-[6px_6px_0_0_#1e3a8a] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"><i data-lucide="rotate-ccw" class="w-4 h-4"></i> 入力をリセット</button>
+      </div>
+
+      <!-- 入力エリア -->
+      <div class="lg:col-span-8">
+        <!-- 1問ずつモード -->
+        <div id="view-step" class="bg-white border-4 border-blue-900 shadow-[8px_8px_0_0_#1e3a8a] animate-fade-in">
+          <div class="bg-blue-900 text-white p-6 flex items-start gap-4 border-b-4 border-blue-900">
+            <div id="step-icon-container" class="bg-white p-3 border-2 border-blue-900 text-blue-900 shadow-[4px_4px_0_0_#06b6d4]"></div>
+            <div>
+              <span id="step-counter" class="text-cyan-400 text-sm font-black block mb-1"></span>
+              <h2 id="step-title" class="text-2xl font-black"></h2>
+            </div>
+          </div>
+          <div class="p-6 space-y-6">
+            <label id="step-question" class="block text-lg font-black border-l-8 border-blue-900 pl-4"></label>
+            <div id="step-suggestions" class="space-y-3"></div>
+            <div class="relative">
+              <textarea id="step-textarea" oninput="handleInput(this.value)" class="w-full p-4 bg-blue-50 border-4 border-blue-900 font-bold focus:outline-none focus:shadow-[6px_6px_0_0_#06b6d4] transition-all min-h-[200px]" placeholder=""></textarea>
+              <div id="step-char-count" class="absolute bottom-4 right-4 text-xs bg-white px-2 py-1 border-2 border-blue-900 font-black"></div>
+            </div>
+            <div class="flex justify-between pt-6 mt-6 border-t-4 border-blue-900">
+              <button id="btn-prev" onclick="prevStep()" class="flex gap-2 px-6 py-3 font-black border-4 bg-white border-blue-900 shadow-[4px_4px_0_0_#1e3a8a] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"><i data-lucide="chevron-left" class="w-5 h-5"></i> BACK</button>
+              <button id="btn-next" onclick="nextStep()" class="flex gap-2 px-8 py-3 font-black border-4 border-blue-900 bg-blue-900 text-white shadow-[4px_4px_0_0_#06b6d4] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">NEXT <i data-lucide="arrow-right" class="w-5 h-5"></i></button>
+              <button id="btn-to-preview" onclick="changeStep('preview')" class="hidden-step flex gap-2 px-6 py-3 font-black border-4 border-blue-900 bg-cyan-400 text-blue-900 shadow-[4px_4px_0_0_#1e3a8a] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">確認へ <i data-lucide="check-circle" class="w-5 h-5"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 一括モード -->
+        <div id="view-all" class="hidden-step space-y-8 animate-fade-in">
+          <div id="all-questions-container"></div>
+          <div class="text-center pt-4">
+            <button onclick="changeStep('preview')" class="bg-cyan-400 font-black py-4 px-10 border-4 border-blue-900 shadow-[8px_8px_0_0_#1e3a8a] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex mx-auto gap-2 text-lg">確認画面へ <i data-lucide="check-circle" class="w-6 h-6"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP: PREVIEW -->
+    <div id="step-preview" class="hidden-step bg-white border-4 border-blue-900 shadow-[12px_12px_0_0_#1e3a8a] max-w-4xl mx-auto animate-fade-in">
+      <div class="bg-blue-900 text-white p-6 flex justify-between border-b-4 border-blue-900">
+        <h2 class="text-2xl font-black flex gap-3"><i data-lucide="check-circle" class="w-8 h-8 text-cyan-400"></i> 回答の確認</h2>
+        <button onclick="changeStep('form')" class="bg-white text-blue-900 border-2 border-blue-900 px-4 font-black shadow-[4px_4px_0_0_#06b6d4]">編集に戻る</button>
+      </div>
+      <div class="p-8 space-y-6">
+        <div id="preview-list" class="space-y-4 max-h-[500px] overflow-y-auto pr-4"></div>
+        <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t-4 border-blue-900">
+          <button onclick="copyAnswers()" id="btn-copy-answers" class="flex-1 bg-white font-black py-4 border-4 border-blue-900 shadow-[4px_4px_0_0_#1e3a8a] flex justify-center gap-2"><i data-lucide="copy" class="w-5 h-5"></i> 手元にコピー</button>
+          <button onclick="submitData()" class="flex-1 bg-cyan-400 font-black py-4 border-4 border-blue-900 shadow-[6px_6px_0_0_#1e3a8a] flex justify-center gap-2"><i data-lucide="send" class="w-5 h-5"></i> 送信する</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP: STATUS (Submitting / Complete / Error) -->
+    <div id="step-status" class="hidden-step bg-white border-4 border-blue-900 shadow-[12px_12px_0_0_#1e3a8a] p-16 text-center max-w-2xl mx-auto animate-fade-in mt-10">
+      <div id="status-icon" class="w-24 h-24 border-4 border-blue-900 flex items-center justify-center mx-auto mb-6"></div>
+      <h2 id="status-heading" class="text-3xl font-black mb-4"></h2>
+      <p id="status-message" class="font-bold text-sm mb-8"></p>
+      <button id="status-btn" onclick="resetToHome()" class="bg-cyan-400 font-black py-4 px-10 border-4 border-blue-900 shadow-[6px_6px_0_0_#1e3a8a]">戻る</button>
+    </div>
+
+  </main>
+
+  <script>
+    // データ定義
+    const questions = [
+      { id: 'desired_tool', category: '希望するツール・アプリ', icon: 'lightbulb', text: 'どのようなツールやアプリを作成したいですか？', placeholder: '例：営業スタッフ向けの経費精算アプリなど', suggestions: ['社内向け顧客管理(CRM)Webシステム', '営業スタッフ向けの経費精算スマートフォンアプリ', '自動データ収集・集計を行うスクレイピングツール'] },
+      { id: 'purpose', category: '利用目的・解決したい課題', icon: 'target', text: 'そのツールを作る目的は何ですか？どのような課題を解決したいですか？', placeholder: '例：毎月の経費入力作業が手間で自動化したい。', suggestions: ['手作業による転記作業・ヒューマンエラーを削減したい', '外出先からリアルタイムで情報を入力・共有できるようにしたい', '紙やExcelでの管理から脱却したい'] },
+      { id: 'target', category: '想定する使用者', icon: 'users', text: '主に誰がこのツールを使いますか？', placeholder: '例：自社の営業部員', suggestions: ['自社の営業・現場スタッフ', '社内の管理部門・バックオフィス担当者', '一般の消費者・エンドユーザー'] },
+      { id: 'core_features', category: '機能要件 (Must)', icon: 'settings', text: '「これだけは絶対に外せない」というコア機能は何ですか？', placeholder: '例：写真アップロード機能、承認フロー', suggestions: ['Googleログインなど、安全なユーザー認証', 'CSV / Excelファイルのインポート・エクスポート機能', 'カメラを使った画像アップロード機能'] },
+      { id: 'nice_to_have', category: '機能要件 (Want)', icon: 'check-circle', text: '「できれば欲しい」という追加機能はありますか？', placeholder: '例：Slackへの通知', suggestions: ['Slack / LINE 等への自動通知連携', 'データの自動集計グラフ表示機能', '多言語対応'] },
+      { id: 'environment', category: '利用環境', icon: 'monitor', text: 'どのデバイス、環境で利用しますか？', placeholder: '例：iPhoneとAndroidアプリ。', suggestions: ['マルチデバイス対応のWebアプリ', 'スマートフォン専用アプリ（iOS / Android）', 'Googleスプレッドシート ＋ GAS'] },
+      { id: 'schedule', category: '予算・納期', icon: 'calendar', text: '希望する予算感と、いつまでに必要か教えてください。', placeholder: '例：300万円以内、10月末まで', suggestions: ['開発予算：100万〜200万円程度 / 納期：3ヶ月以内', '最小限を低予算（〜50万円）＆短期間（1ヶ月）で作りたい', '時期・予算は要相談'] }
+    ];
+
+    // 状態管理
+    let state = {
+      answers: JSON.parse(localStorage.getItem('hearing_answers') || '{}'),
+      adminEmail: localStorage.getItem('hearing_admin_email') || '',
+      gasUrl: localStorage.getItem('hearing_gas_url') || '',
+      activeIdx: 0,
+      mode: 'step', // 'step' or 'all'
+      step: 'form'  // 'form', 'preview', 'submitting', 'complete', 'error'
+    };
+
+    // 初期化
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('input-gas-url').value = state.gasUrl;
+      document.getElementById('input-admin-email').value = state.adminEmail;
+      updateStatusHeader();
+      renderNav();
+      renderStep();
+      renderAll();
+      updateProgress();
+      lucide.createIcons();
+    });
+
+    // 状態更新＆ローカルストレージ保存
+    function setAnswer(id, val) {
+      state.answers[id] = val;
+      localStorage.setItem('hearing_answers', JSON.stringify(state.answers));
+      updateProgress();
+      renderNav();
+      
+      // UI即時反映
+      if (state.mode === 'step') {
+        document.getElementById('step-textarea').value = val;
+        document.getElementById('step-char-count').innerText = `文字数: ${val.length}`;
+      } else {
+        document.getElementById(`textarea-${id}`).value = val;
+        document.getElementById(`char-count-${id}`).innerText = `文字数: ${val.length}`;
+      }
+    }
+
+    function handleInput(val) {
+      setAnswer(questions[state.activeIdx].id, val);
+    }
+    
+    function handleAllInput(id, val) {
+      setAnswer(id, val);
+    }
+
+    function insertText(text) {
+      const id = questions[state.activeIdx].id;
+      const current = state.answers[id] || '';
+      setAnswer(id, current ? current + '\n' + text : text);
+    }
+    
+    function insertTextAll(id, text) {
+      const current = state.answers[id] || '';
+      setAnswer(id, current ? current + '\n' + text : text);
+    }
+
+    // 画面遷移
+    function changeStep(newStep) {
+      state.step = newStep;
+      document.getElementById('step-form').classList.add('hidden-step');
+      document.getElementById('step-preview').classList.add('hidden-step');
+      document.getElementById('step-status').classList.add('hidden-step');
+
+      if (newStep === 'form') {
+        document.getElementById('step-form').classList.remove('hidden-step');
+        renderNav();
+      } else if (newStep === 'preview') {
+        renderPreview();
+        document.getElementById('step-preview').classList.remove('hidden-step');
+      } else {
+        document.getElementById('step-status').classList.remove('hidden-step');
+        renderStatus(newStep);
+      }
+    }
+
+    function setViewMode(mode) {
+      state.mode = mode;
+      document.getElementById('btn-mode-step').className = `flex justify-center gap-2 py-2 border-2 border-blue-900 font-black text-sm transition-all ${mode === 'step' ? 'bg-blue-900 text-white shadow-[4px_4px_0_0_#06b6d4]' : 'bg-white hover:shadow-[4px_4px_0_0_#1e3a8a]'}`;
+      document.getElementById('btn-mode-all').className = `flex justify-center gap-2 py-2 border-2 border-blue-900 font-black text-sm transition-all ${mode === 'all' ? 'bg-blue-900 text-white shadow-[4px_4px_0_0_#06b6d4]' : 'bg-white hover:shadow-[4px_4px_0_0_#1e3a8a]'}`;
+      
+      if(mode === 'step') {
+        document.getElementById('view-step').classList.remove('hidden-step');
+        document.getElementById('view-all').classList.add('hidden-step');
+        renderStep();
+      } else {
+        document.getElementById('view-step').classList.add('hidden-step');
+        document.getElementById('view-all').classList.remove('hidden-step');
+      }
+      renderNav();
+    }
+
+    function prevStep() { if (state.activeIdx > 0) { state.activeIdx--; renderStep(); renderNav(); } }
+    function nextStep() { if (state.activeIdx < questions.length - 1) { state.activeIdx++; renderStep(); renderNav(); } }
+
+    // レンダリング系
+    function renderStep() {
+      const q = questions[state.activeIdx];
+      const ans = state.answers[q.id] || '';
+      
+      document.getElementById('step-icon-container').innerHTML = `<i data-lucide="${q.icon}" class="w-6 h-6"></i>`;
+      document.getElementById('step-counter').innerText = `Question ${state.activeIdx + 1} / ${questions.length}`;
+      document.getElementById('step-title').innerText = q.category;
+      document.getElementById('step-question').innerText = q.text;
+      
+      let sugHtml = '<div class="flex gap-2 flex-wrap">';
+      q.suggestions.forEach(s => {
+        sugHtml += `<button onclick="insertText('${s}')" class="text-xs bg-white border-2 border-blue-900 px-3 py-2 font-bold hover:bg-blue-900 hover:text-white transition-all shadow-[2px_2px_0_0_#0f172a]">+ ${s}</button>`;
+      });
+      sugHtml += '</div>';
+      document.getElementById('step-suggestions').innerHTML = sugHtml;
+      
+      const ta = document.getElementById('step-textarea');
+      ta.placeholder = q.placeholder;
+      ta.value = ans;
+      document.getElementById('step-char-count').innerText = `文字数: ${ans.length}`;
+
+      document.getElementById('btn-prev').disabled = state.activeIdx === 0;
+      document.getElementById('btn-prev').className = `flex gap-2 px-6 py-3 font-black border-4 ${state.activeIdx === 0 ? 'border-gray-200 text-gray-400 bg-gray-50' : 'border-blue-900 bg-white shadow-[4px_4px_0_0_#1e3a8a]'}`;
+      
+      if (state.activeIdx === questions.length - 1) {
+        document.getElementById('btn-next').classList.add('hidden-step');
+        document.getElementById('btn-to-preview').classList.remove('hidden-step');
+      } else {
+        document.getElementById('btn-next').classList.remove('hidden-step');
+        document.getElementById('btn-to-preview').classList.add('hidden-step');
+      }
+      lucide.createIcons();
+    }
+
+    function renderAll() {
+      let html = '';
+      questions.forEach((q, idx) => {
+        const ans = state.answers[q.id] || '';
+        html += `
+        <div class="bg-white border-4 border-blue-900 shadow-[8px_8px_0_0_#1e3a8a] p-6 mb-6">
+          <h3 class="text-xl font-black mb-4 flex items-center gap-3"><span class="bg-blue-900 text-white p-2"><i data-lucide="${q.icon}"></i></span> Q${idx+1}. ${q.category}</h3>
+          <p class="font-bold border-l-4 border-blue-900 pl-3 mb-4">${q.text}</p>
+          <div class="flex flex-wrap gap-2 mb-4">
+            ${q.suggestions.map(s => `<button onclick="insertTextAll('${q.id}', '${s}')" class="text-xs border-2 border-blue-900 px-2 py-1 font-bold hover:bg-blue-900 hover:text-white shadow-[2px_2px_0_0_#1e3a8a]">+ ${s}</button>`).join('')}
+          </div>
+          <div class="relative">
+            <textarea id="textarea-${q.id}" oninput="handleAllInput('${q.id}', this.value)" class="w-full p-4 bg-blue-50 border-4 border-blue-900 focus:outline-none focus:shadow-[4px_4px_0_0_#06b6d4] font-bold min-h-[120px]" placeholder="${q.placeholder}">${ans}</textarea>
+            <div id="char-count-${q.id}" class="absolute bottom-3 right-3 text-xs bg-white px-2 border-2 border-blue-900 font-black">文字数: ${ans.length}</div>
+          </div>
+        </div>`;
+      });
+      document.getElementById('all-questions-container').innerHTML = html;
+    }
+
+    function renderNav() {
+      let html = '';
+      questions.forEach((q, idx) => {
+        const isAns = !!(state.answers[q.id] && state.answers[q.id].trim() !== '');
+        const isAct = state.mode === 'step' && state.activeIdx === idx;
+        const btnClass = isAct ? 'bg-blue-900 text-white shadow-[4px_4px_0_0_#06b6d4]' : 'bg-white hover:border-blue-900';
+        const circleClass = isAns ? 'bg-cyan-400 text-blue-900 border-blue-900' : (isAct ? 'bg-blue-900 border-white' : 'bg-white border-blue-900');
+        
+        html += `
+        <button onclick="state.activeIdx=${idx}; setViewMode('step');" class="w-full text-left p-2 flex items-center gap-3 font-black border-2 transition-all ${btnClass}">
+          <div class="w-6 h-6 flex items-center justify-center text-xs border-2 ${circleClass}">${isAns ? '✓' : idx+1}</div>
+          <span class="truncate">${q.category}</span>
+        </button>`;
+      });
+      document.getElementById('nav-list').innerHTML = html;
+    }
+
+    function renderPreview() {
+      let html = '';
+      questions.forEach((q, idx) => {
+        const ans = state.answers[q.id];
+        const hasAns = ans && ans.trim() !== '';
+        html += `
+        <div class="bg-white border-2 border-blue-900 p-5 shadow-[4px_4px_0_0_#1e3a8a]">
+          <div class="flex justify-between border-b-2 border-gray-100 pb-2 mb-3">
+            <span class="font-black text-sm"><span class="bg-blue-900 text-white px-2 py-1 mr-2">Q${idx+1}</span>${q.category}</span>
+            <button onclick="state.activeIdx=${idx}; setViewMode('step'); changeStep('form');" class="text-xs bg-gray-100 border-2 border-blue-900 px-2 font-black hover:bg-blue-900 hover:text-white">修正</button>
+          </div>
+          <p class="whitespace-pre-wrap font-bold text-sm ${hasAns ? 'text-gray-800' : 'text-gray-400'}">${hasAns ? ans : '（未回答）'}</p>
+        </div>`;
+      });
+      document.getElementById('preview-list').innerHTML = html;
+    }
+
+    function renderStatus(type) {
+      const icon = document.getElementById('status-icon');
+      const head = document.getElementById('status-heading');
+      const msg = document.getElementById('status-message');
+      const btn = document.getElementById('status-btn');
+      
+      icon.className = "w-24 h-24 border-4 border-blue-900 flex items-center justify-center mx-auto mb-6 shadow-[6px_6px_0_0_#1e3a8a]";
+      
+      if(type === 'submitting') {
+        icon.classList.add('bg-cyan-400');
+        icon.innerHTML = `<i data-lucide="loader-2" class="w-12 h-12 animate-spin text-blue-900"></i>`;
+        head.innerText = "Processing...";
+        msg.innerText = "データを安全に送信しています。";
+        btn.classList.add('hidden-step');
+      } else if (type === 'complete') {
+        icon.classList.add('bg-blue-900', 'text-cyan-400');
+        icon.innerHTML = `<i data-lucide="check-circle" class="w-12 h-12"></i>`;
+        head.innerText = "送信完了！";
+        msg.innerText = "担当者が確認のうえご連絡差し上げます。";
+        btn.innerText = "最初に戻る";
+        btn.classList.remove('hidden-step');
+      } else {
+        icon.classList.add('bg-rose-600', 'text-white');
+        icon.innerHTML = `<i data-lucide="alert-circle" class="w-12 h-12"></i>`;
+        head.innerText = "送信エラー";
+        msg.innerText = "通信に失敗しました。設定を確認してください。";
+        btn.innerText = "フォームに戻る";
+        btn.classList.remove('hidden-step');
+      }
+      lucide.createIcons();
+    }
+
+    function updateProgress() {
+      const c = questions.filter(q => state.answers[q.id] && state.answers[q.id].trim() !== '').length;
+      const p = Math.round((c / questions.length) * 100);
+      document.getElementById('progress-count').innerText = c;
+      document.getElementById('progress-percent').innerText = p + '%';
+      document.getElementById('progress-bar').style.width = p + '%';
+    }
+
+    // 設定・その他
+    function toggleSettings() {
+      const p = document.getElementById('settings-panel');
+      p.classList.toggle('hidden-step');
+    }
+    
+    function saveSettings() {
+      state.gasUrl = document.getElementById('input-gas-url').value;
+      state.adminEmail = document.getElementById('input-admin-email').value;
+      localStorage.setItem('hearing_gas_url', state.gasUrl);
+      localStorage.setItem('hearing_admin_email', state.adminEmail);
+      toggleSettings();
+      updateStatusHeader();
+    }
+    
+    function updateStatusHeader() {
+      const dot = document.getElementById('status-dot');
+      const txt = document.getElementById('status-text');
+      if(state.gasUrl) {
+        dot.className = "w-3 h-3 rounded-full border-2 border-blue-900 bg-cyan-400";
+        txt.innerText = "ONLINE (GAS CONNECTED)";
+      } else {
+        dot.className = "w-3 h-3 rounded-full border-2 border-blue-900 bg-rose-400";
+        txt.innerText = "LOCAL DEMO MODE";
+      }
+    }
+
+    function resetData() {
+      if(confirm('入力をすべて消去しますか？')) {
+        state.answers = {};
+        localStorage.removeItem('hearing_answers');
+        state.activeIdx = 0;
+        updateProgress();
+        if(state.mode==='step') renderStep(); else renderAll();
+        renderNav();
+      }
+    }
+    function resetToHome() {
+      if(state.step === 'complete') {
+        state.answers = {};
+        localStorage.removeItem('hearing_answers');
+        state.activeIdx = 0;
+        updateProgress();
+        if(state.mode==='step') renderStep(); else renderAll();
+      }
+      changeStep('form');
+    }
+
+    function copyAnswers() {
+      const text = questions.map((q, i) => `【Q${i+1}. ${q.category}】\n${state.answers[q.id] || '未回答'}\n`).join('\n');
+      copyToClip(text, document.getElementById('btn-copy-answers'), 'COPIED!');
+    }
+    
+    function copyGasCode() {
+      const code = `// ※GASコードはマニュアルを参照（連携用のフルコード）\n// スクリプトプロパティ「GEMINI_API_KEY」の設定をお忘れなく！`; 
+      // 注: 実際のプロジェクトではここに長いGASコードを入れることができます。
+      copyToClip(code, document.getElementById('btn-copy-gas'), 'コピーしました');
+    }
+
+    function copyToClip(text, btn, successMsg) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        const origHtml = btn.innerHTML;
+        btn.innerHTML = `<i data-lucide="check" class="w-5 h-5"></i> ${successMsg}`;
+        btn.classList.add('bg-cyan-400');
+        lucide.createIcons();
+        setTimeout(() => { btn.innerHTML = origHtml; btn.classList.remove('bg-cyan-400'); lucide.createIcons(); }, 2000);
+      } catch(e) {}
+      document.body.removeChild(ta);
+    }
+
+    // 送信
+    async function submitData() {
+      changeStep('submitting');
+      try {
+        if (state.gasUrl && state.gasUrl.startsWith('http')) {
+          await fetch(state.gasUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: state.adminEmail, answers: state.answers, timestamp: new Date().toISOString() })
+          });
+        } else {
+          await new Promise(r => setTimeout(r, 2000));
+        }
+        changeStep('complete');
+      } catch(e) {
+        changeStep('error');
+      }
+    }
+  </script>
+</body>
+</html>
