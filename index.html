@@ -139,15 +139,15 @@
 
   <script>
     // =========================================================
-    // ⚙️ 管理者設定
+    // ⚙️ バックエンド通信設定
     // =========================================================
     const CONFIG = {
       // 指定されたGASの「ウェブアプリ URL」
-      GAS_URL: "https://script.google.com/macros/s/AKfycbztnrbX_F30l1C5ZCjWK5Q3IWcIpoLgwGRsdlCUaBeDVn-Lo_GQYSMLIkYw35YrV41f/exec"
+      GAS_URL: "https://script.google.com/macros/s/AKfycbybZ5q3q5tvB022C5InEGETVcXPd4FBnIdhN3ZlBFk8vzMqMHJlZA2q_lp0bfJ26wpI/exec"
     };
     // =========================================================
 
-    // データ定義
+    // データ定義（純粋なヒアリング項目のみ）
     const questions = [
       { id: 'desired_tool', category: '希望するツール・アプリ', icon: 'lightbulb', text: 'どのようなツールやアプリを作成したいですか？', placeholder: '例：営業スタッフ向けの経費精算アプリなど', suggestions: ['社内向け顧客管理(CRM)Webシステム', '営業スタッフ向けの経費精算スマートフォンアプリ', '自動データ収集・集計を行うスクレイピングツール'] },
       { id: 'purpose', category: '利用目的・解決したい課題', icon: 'target', text: 'そのツールを作る目的は何ですか？どのような課題を解決したいですか？', placeholder: '例：毎月の経費入力作業が手間で自動化したい。', suggestions: ['手作業による転記作業・ヒューマンエラーを削減したい', '外出先からリアルタイムで情報を入力・共有できるようにしたい', '紙やExcelでの管理から脱却したい'] },
@@ -333,7 +333,7 @@
       document.getElementById('preview-list').innerHTML = html;
     }
 
-    function renderStatus(type) {
+    function renderStatus(type, errorMsg = "") {
       const icon = document.getElementById('status-icon');
       const head = document.getElementById('status-heading');
       const msg = document.getElementById('status-message');
@@ -351,14 +351,14 @@
         icon.classList.add('bg-blue-900', 'text-cyan-400');
         icon.innerHTML = `<i data-lucide="check-circle" class="w-12 h-12"></i>`;
         head.innerText = "送信完了！";
-        msg.innerText = "ご協力ありがとうございました！\n担当者が確認のうえご連絡差し上げます。";
+        msg.innerText = "ご協力ありがとうございました！\n自動解析された要件定義書が管理者に安全に通知されました。";
         btn.innerText = "最初に戻る";
         btn.classList.remove('hidden-step');
       } else {
         icon.classList.add('bg-rose-600', 'text-white');
         icon.innerHTML = `<i data-lucide="alert-circle" class="w-12 h-12"></i>`;
         head.innerText = "送信エラー";
-        msg.innerText = "通信に失敗しました。時間をおいて再度お試しいただくか、担当者へ直接ご連絡ください。";
+        msg.innerText = errorMsg || "通信に失敗しました。時間をおいて再度お試しいただくか、担当者へ直接ご連絡ください。";
         btn.innerText = "フォームに戻る";
         btn.classList.remove('hidden-step');
       }
@@ -417,29 +417,34 @@
     async function submitData() {
       changeStep('submitting');
       try {
-        if (!CONFIG.GAS_URL || CONFIG.GAS_URL === "YOUR_GAS_WEBAPP_URL_HERE") {
-          console.warn("GASのURLが設定されていません。デモ動作として扱います。");
-          await new Promise(r => setTimeout(r, 2000));
-          changeStep('complete');
-          return;
-        }
-
-        // GASへの送信
+        // GASへ送信 (CORS対策で text/plain を使用し、JSONとして読み取れるようにする)
         const response = await fetch(CONFIG.GAS_URL, {
           method: 'POST',
-          mode: 'no-cors', 
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'text/plain' 
+          },
           body: JSON.stringify({ 
             answers: state.answers, 
             timestamp: new Date().toISOString() 
           })
         });
         
+        // GASからのレスポンスを読み取る
+        const result = await response.json();
+        
+        if (result.status === "error") {
+          throw new Error(result.message);
+        }
+        
         changeStep('complete');
 
       } catch(e) {
         console.error("Submit error:", e);
-        changeStep('error');
+        // エラー内容を画面に表示する
+        renderStatus('error', e.message || "通信エラーが発生しました。設定を確認してください。");
+        document.getElementById('step-form').classList.add('hidden-step');
+        document.getElementById('step-preview').classList.add('hidden-step');
+        document.getElementById('step-status').classList.remove('hidden-step');
       }
     }
   </script>
